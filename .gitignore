@@ -1,0 +1,21 @@
+# ignore virtualenv
+env/
+
+# ignore pycache
+__pycache__/
+
+# ignore migrations
+migrations/
+
+# ignore .env
+.env
+
+# Ignore python files
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pywz
+*.pyzw
+*.pyzwz

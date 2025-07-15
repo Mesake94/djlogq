@@ -1,0 +1,6 @@
+include README.md
+include LICENSE
+recursive-include src/logq/migrations *.py
+recursive-include src/logq/management *.py
+recursive-include src/logq/templates *.html
+recursive-include src/logq/static *

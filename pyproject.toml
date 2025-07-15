@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools >= 40.9.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "djlogq"
+version = "1.0.3"
+description = "A reusable Django app for asynchronous, thread-safe logging with rich metadata, admin interface, and API support."
+readme = "README.md"
+authors = [
+    {name = "mesake", email = "#"}
+]
+license = {text = "MIT"}
+requires-python = ">=3.8"
+dependencies = [
+    "Django"
+]
+
+[project.optional-dependencies]
+dev = [
+    "build==1.2.1",
+    "nox==2024.4.15",
+    "twine==5.1.1",
+]
+
+# Add package discovery configuration
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Add package data for Django app
+[tool.setuptools.package-data]
+logq = [
+    "migrations/*.py",
+    "management/commands/*.py",
+    "templates/*.html",
+    "static/*",
+]

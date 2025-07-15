@@ -1,0 +1,6 @@
+Django
+
+[dev]
+build==1.2.1
+nox==2024.4.15
+twine==5.1.1
