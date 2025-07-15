@@ -19,3 +19,6 @@ migrations/
 *.pywz
 *.pyzw
 *.pyzwz
+
+# ignore dist
+dist/
