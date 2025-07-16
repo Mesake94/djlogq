@@ -4,18 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "djlogq"
-version = "1.0.0"
+version = "1.0.4"
 description = "A reusable Django app for asynchronous, thread-safe logging with rich metadata, admin interface, and API support."
 readme = "README.md"
 authors = [
-    {name = "mesake", email = "mesnavunawa@gmail.com"}
+    {name = "mess", email = "mesnavunawa@gmail.com"}
 ]
 license = {text = "MIT"}
 requires-python = ">=3.8"
 dependencies = [
     "Django"
 ]
-
+urls = {Homepage = "https://github.com/Mesake94/djlogq"}
 [project.optional-dependencies]
 dev = [
     "build==1.2.1",

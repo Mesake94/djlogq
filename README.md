@@ -7,7 +7,7 @@ A reusable Django app that provides asynchronous logging functionality using a s
 - **Asynchronous Logging**: All log operations run in a separate thread
 - **Thread-Safe**: Uses a queue system for thread-safe logging
 - **Rich Metadata**: Captures module, function, line number, user ID, request ID, and extra data
-- **Admin Interface**: Beautiful Django admin interface for viewing and managing logs
+- **Admin Interface**: Django admin interface for viewing and managing logs
 - **API Endpoints**: REST API for external logging
 - **Middleware**: Automatic request logging with unique request IDs
 - **Decorators**: Utility decorators for function logging and performance monitoring
@@ -136,9 +136,7 @@ Access the admin interface at `/admin/` to view and manage logs. Features includ
 
 - Filter by level, module, timestamp, user ID
 - Search by message, module, function, request ID
-- View extra data in formatted JSON
-- Delete old logs
-- Export functionality
+
 
 ### Management Commands
 

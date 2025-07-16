@@ -8,7 +8,7 @@ __pycache__/
 migrations/
 
 # ignore .env
-.env
+*.env
 
 # Ignore python files
 *.pyc
