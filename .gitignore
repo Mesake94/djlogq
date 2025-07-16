@@ -22,3 +22,6 @@ migrations/
 
 # ignore dist
 dist/
+
+# ignore .sqlite3
+*.sqlite3

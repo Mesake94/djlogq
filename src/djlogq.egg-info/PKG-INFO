@@ -1,9 +1,10 @@
 Metadata-Version: 2.4
 Name: djlogq
-Version: 1.0.4
+Version: 1.0.5
 Summary: A reusable Django app for asynchronous, thread-safe logging with rich metadata, admin interface, and API support.
 Author-email: mess <mesnavunawa@gmail.com>
 License: MIT
+Project-URL: Homepage, https://github.com/Mesake94/djlogq
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 Requires-Dist: Django

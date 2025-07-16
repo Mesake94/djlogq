@@ -26,6 +26,9 @@ class AsyncLogger:
         self.running = False
         self.thread = None
         self._lock = threading.Lock()
+        self.dropped_count = 0
+        self.dropped_levels = {}  # track most serious dropped level
+        self.dropped_lock = threading.Lock()  # 
         
     def start(self):
         """Start the logging thread."""
@@ -80,6 +83,31 @@ class AsyncLogger:
         try:
             with transaction.atomic():
                 LogEntry.objects.bulk_create(batch, ignore_conflicts=True)
+
+                # Log dropped messages if any
+                with self._dropped_lock:
+                    if self.dropped_count > 0:
+                        dropped_entry = LogEntry(
+                            level='WARNING',
+                            message=f"{self.dropped_count} log messages were dropped due to queue overflow",
+                            module='logq.async_logger',
+                            function='_flush_batch',
+                            extra_data={
+                                'dropped_count': self.dropped_count,
+                                'most_serious_level': max(self.dropped_levels.values(), 
+                                                        key=lambda x: {'DEBUG': 0, 'INFO': 1, 'WARNING': 2, 'ERROR': 3, 'CRITICAL': 4}[x]) if self.dropped_levels else 'INFO'
+                            }
+                        )
+                        LogEntry.objects.create(
+                            level='WARNING',
+                            message=f"{self.dropped_count} log messages were dropped, the most serious one being {dropped_entry.extra_data['most_serious_level']}",
+                            module='logq.async_logger',
+                            function='_flush_batch',
+                            extra_data=dropped_entry.extra_data
+                        )
+                        self.dropped_count = 0
+                        self.dropped_levels = {}
+                        
         except Exception as e:
             print(f"Error flushing log batch: {e}")
     
@@ -110,7 +138,23 @@ class AsyncLogger:
             self.queue.put_nowait(entry)
         except queue.Full:
             # If queue is full, log to console as fallback
-            print(f"Log queue full, dropping entry: [{level}] {message}")
+            # print(f"Log queue full, dropping entry: [{level}] {message}")
+            # Track dropped messages with counter
+            with self.dropped_lock:
+                self.dropped_count += 1
+                # Track the most serious level dropped
+                level_priority = {
+                    'DEBUG': 0,
+                    'INFO': 1,
+                    'WARNING': 2,
+                    'ERROR': 3,
+                    'CRITICAL': 4
+                }
+                current_priority = level_priority.get(level, 0)
+                if level not in self.dropped_levels or current_priority > level_priority.get(self.dropped_levels[level], 0):
+                    self.dropped_levels[level] = level
+                self.dropped_levels[level] = level
+                    
     
     def debug(self, message: str, **kwargs):
         self.log(LogLevel.DEBUG, message, **kwargs)
