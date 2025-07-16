@@ -28,7 +28,7 @@ class AsyncLogger:
         self._lock = threading.Lock()
         self.dropped_count = 0
         self.dropped_levels = {}  # track most serious dropped level
-        self.dropped_lock = threading.Lock()  # 
+        self._dropped_lock = threading.Lock()  # 
         
     def start(self):
         """Start the logging thread."""
@@ -107,7 +107,7 @@ class AsyncLogger:
                         )
                         self.dropped_count = 0
                         self.dropped_levels = {}
-                        
+
         except Exception as e:
             print(f"Error flushing log batch: {e}")
     
@@ -140,7 +140,7 @@ class AsyncLogger:
             # If queue is full, log to console as fallback
             # print(f"Log queue full, dropping entry: [{level}] {message}")
             # Track dropped messages with counter
-            with self.dropped_lock:
+            with self._dropped_lock:
                 self.dropped_count += 1
                 # Track the most serious level dropped
                 level_priority = {
