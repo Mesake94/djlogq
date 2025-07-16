@@ -87,6 +87,17 @@ class AsyncLogger:
                 # Log dropped messages if any
                 with self._dropped_lock:
                     if self.dropped_count > 0:
+                        # Find the most serious dropped level
+                        level_priority = {
+                            'DEBUG': 0,
+                            'INFO': 1,
+                            'WARNING': 2,
+                            'ERROR': 3,
+                            'CRITICAL': 4
+                        }
+                        most_serious_level = max(self.dropped_levels.keys(), 
+                                               key=lambda x: level_priority.get(x, 0)) if self.dropped_levels else 'INFO'
+                        
                         dropped_entry = LogEntry(
                             level='WARNING',
                             message=f"{self.dropped_count} log messages were dropped due to queue overflow",
@@ -94,17 +105,11 @@ class AsyncLogger:
                             function='_flush_batch',
                             extra_data={
                                 'dropped_count': self.dropped_count,
-                                'most_serious_level': max(self.dropped_levels.values(), 
-                                                        key=lambda x: {'DEBUG': 0, 'INFO': 1, 'WARNING': 2, 'ERROR': 3, 'CRITICAL': 4}[x]) if self.dropped_levels else 'INFO'
+                                'most_serious_level': most_serious_level
                             }
                         )
-                        LogEntry.objects.create(
-                            level='WARNING',
-                            message=f"{self.dropped_count} log messages were dropped, the most serious one being {dropped_entry.extra_data['most_serious_level']}",
-                            module='logq.async_logger',
-                            function='_flush_batch',
-                            extra_data=dropped_entry.extra_data
-                        )
+                        dropped_entry.save()
+                        
                         self.dropped_count = 0
                         self.dropped_levels = {}
 

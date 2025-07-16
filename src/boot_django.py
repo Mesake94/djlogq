@@ -54,5 +54,6 @@ def boot_django():
         TIME_ZONE="UTC",
         USE_TZ=True,
         SECRET_KEY="django-insecure-test-key-for-testing-only",
+
     )
     django.setup()
