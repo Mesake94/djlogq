@@ -8,6 +8,7 @@ import time
 import threading
 from .models import LogEntry, LogLevel
 from .async_logger import AsyncLogger, get_async_logger, stop_async_logger
+from .utils import log_performance, log_function_call
 import requests
 
 class AsyncLoggerTestCase(TransactionTestCase):
@@ -183,3 +184,60 @@ class MiddlewareTestCase(TransactionTestCase):
             cursor.execute("DELETE FROM logq_logentry")
         super().tearDown()
     
+
+
+class UtilsTestCase(TransactionTestCase):
+    def setUp(self):
+        super().setUp()
+        # Stop the global logger to avoid interference
+        stop_async_logger()
+        
+        # Clear all existing logs
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM logq_logentry")
+        
+        # Create a properly configured global logger
+        from .async_logger import _async_logger
+        from . import async_logger as async_logger_module
+        
+        # Create a test logger with fast flush interval
+        test_logger = AsyncLogger(max_queue_size=100, flush_interval=0.1)
+        test_logger.start()
+        
+        # Replace the global logger
+        async_logger_module._async_logger = test_logger
+        
+        time.sleep(0.2)  # Wait for thread to start
+    
+    def tearDown(self):
+        # Stop the global logger
+        stop_async_logger()
+        time.sleep(0.2)  # Wait for thread to stop
+        
+        # Clear logs after test
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM logq_logentry")
+        super().tearDown()
+    
+    def test_log_performance(self):
+        """Test log_performance decorator."""
+        # Debug: Check if the logger is running
+        logger = get_async_logger()
+
+        # Test direct logging first
+        logger.info("Direct test message")
+        time.sleep(0.3)
+        
+        @log_performance(threshold_seconds=0.1, always_log=True)
+        def slow_function():
+            time.sleep(0.2)
+            return "Result"
+        
+        slow_function()
+        
+        time.sleep(0.5)  # Wait longer for flush
+        
+        entries = LogEntry.objects.all()
+
+        self.assertGreater(entries.count(), 0)
+        

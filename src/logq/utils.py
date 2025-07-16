@@ -32,10 +32,10 @@ def log_function_call(func=None, *, level='INFO'):
                 }
             )
             
-            start_time = time.time()
+            start_time = time.perf_counter()
             try:
                 result = func(*args, **kwargs)
-                execution_time = time.time() - start_time
+                execution_time = time.perf_counter() - start_time
                 
                 # Log successful completion
                 logger.log(
@@ -47,7 +47,7 @@ def log_function_call(func=None, *, level='INFO'):
                 return result
             
             except Exception as e:
-                execution_time = time.time() - start_time
+                execution_time = time.perf_counter() - start_time
                 
                 # Log exception
                 logger.exception(
@@ -64,30 +64,54 @@ def log_function_call(func=None, *, level='INFO'):
     return decorator(func)
 
 
-def log_performance(threshold_seconds=1.0):
+def log_performance(threshold_seconds=1.0, always_log=False):
     """
-    Decorator to log slow function calls.
+    Decorator to log function performance metrics.
+    
+    Args:
+        threshold_seconds: Log warning when execution exceeds this threshold
+        always_log: If True, log every function call for analytics (like Sentry spans)
     
     Usage:
         @log_performance(threshold_seconds=0.5)
         def my_slow_function():
             pass
+        
+        @log_performance(always_log=True)
+        def my_analytics_function():
+            pass
     """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            start_time = time.time()
+            start_time = time.perf_counter()
             result = func(*args, **kwargs)
-            execution_time = time.time() - start_time
+            execution_time = time.perf_counter() - start_time
             
+            logger = get_async_logger()
+            
+            # Always log for analytics if requested
+            if always_log:
+                logger.info(
+                    f"Function performance: {func.__name__}",
+                    extra_data={
+                        'execution_time': execution_time,
+                        'function_name': func.__name__,
+                        'module': func.__module__,
+                        'performance_metric': True,  # Tag for easy filtering
+                    }
+                )
+            
+            # Log warning if threshold exceeded
             if execution_time > threshold_seconds:
-                logger = get_async_logger()
                 logger.warning(
                     f"Slow function detected: {func.__name__} took {execution_time:.3f}s",
                     extra_data={
                         'execution_time': execution_time,
                         'threshold': threshold_seconds,
                         'module': func.__module__,
+                        'function_name': func.__name__,
+                        'performance_metric': True,
                     }
                 )
             
@@ -114,7 +138,7 @@ class LogContext:
         self.start_time = None
     
     def __enter__(self):
-        self.start_time = time.time()
+        self.start_time = time.perf_counter()
         self.logger.log(
             self.level,
             f"Starting: {self.message}",
@@ -123,7 +147,7 @@ class LogContext:
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        execution_time = time.time() - self.start_time
+        execution_time = time.perf_counter() - self.start_time
         
         if exc_type is None:
             self.logger.log(
