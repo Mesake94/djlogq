@@ -13,6 +13,16 @@ A reusable Django app that provides asynchronous logging functionality using a s
 - **Decorators**: Utility decorators for function logging and performance monitoring
 - **Context Managers**: Easy-to-use context managers for operation logging
 - **Configurable**: Customizable queue size, flush intervals, and cleanup policies
+- **Extendible**: Easily add your own custom handlers to process logs in different ways.
+
+  **Useful built-in and example handlers include:**
+  - **File Handler**: Write logs to a file.
+  - **Email Handler**: Send error logs via email.
+  - **Webhook Handler**: Forward logs to external services (e.g., Slack, Discord, custom endpoints).
+  - **Database Handler**: Store logs in custom database tables.
+  - **Console Handler**: Output logs to the console for development.
+  - **Third-Party Integrations**: Integrate with services like Sentry or Logstash.
+  - You can implement your own handler by subclassing the provided base handler class.
 
 ## Installation
 
@@ -46,6 +56,7 @@ ASYNC_LOGGING_CONFIG = {
     'AUTO_CLEANUP_DAYS': 30,
     'ENABLE_REQUEST_LOGGING': True,
     'IGNORE_PATHS': ['/admin/'],  # paths to ignore for request logging
+    'DEFAULT_HANDLERS': [],  # list of handler class paths, e.g. ['logq.handlers.FileHandler']
 }
 ```
 
@@ -130,6 +141,11 @@ response = requests.get('http://your-domain/logq/api/logs/?limit=10')
 logs = response.json()['logs']
 ```
 
+### CUSTOM HANDLERS
+You can define custom log handlers by subclassing `LogHandler` and passing them to `AsyncLogger` or define them in the `DEFAULT_HANDLERS` section of the config. This allows you to process or forward log entries in any way you need (e.g., send to an external service, write to a file, etc).
+
+
+
 ### Admin Interface
 
 Access the admin interface at `/admin/` to view and manage logs. Features include:
@@ -161,7 +177,6 @@ python manage.py clean_logs --dry-run
 |---------|---------|-------------|
 | `MAX_QUEUE_SIZE` | 1000 | Maximum number of log entries in the queue |
 | `FLUSH_INTERVAL` | 1.0 | How often to flush logs to database (seconds) |
-| `AUTO_CLEANUP_DAYS` | 30 | Days to keep logs before auto-cleanup |
 | `ENABLE_REQUEST_LOGGING` | True | Whether to log all HTTP requests |
 
 ## Model Fields

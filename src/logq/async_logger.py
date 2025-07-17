@@ -9,6 +9,19 @@ from django.utils import timezone
 from django.db import transaction
 from django.conf import settings
 from .models import LogEntry, LogLevel
+from typing import List
+
+
+class LogHandler:
+    """Base class for custom log handlers"""
+
+    def handle(self, log_entry:LogEntry) -> None:
+        """Handle a log entry. Overide this method to implement custom logging behavior."""
+        pass
+
+    def flush(self) -> None:
+        """Flush any buffered log entries. Override this method to implement custom flushing behavior."""
+        pass
 
 
 class AsyncLogger:
@@ -16,7 +29,7 @@ class AsyncLogger:
     Asynchronous logger that runs in a separate thread to avoid blocking the main application.
     """
     
-    def __init__(self, max_queue_size: int = None, flush_interval: float = None):
+    def __init__(self, max_queue_size: int = None, flush_interval: float = None, handlers: List[LogHandler] = None):
         # Get configuration from settings
         config = getattr(settings, 'ASYNC_LOGGING_CONFIG', {})
         self.max_queue_size = max_queue_size or config.get('MAX_QUEUE_SIZE', 1000)
@@ -28,7 +41,41 @@ class AsyncLogger:
         self._lock = threading.Lock()
         self.dropped_count = 0
         self.dropped_levels = {}  # track most serious dropped level
-        self._dropped_lock = threading.Lock()  # 
+        self._dropped_lock = threading.Lock()
+
+        # initialize custom handlers
+        self.handlers = handlers or []
+        self._add_default_handlers()  # add default handlers to the logger
+
+    def _add_default_handlers(self):
+        """Add default handlers from settings if configured."""
+        config = getattr(settings, 'ASYNC_LOGGING_CONFIG', {})
+        default_handlers = config.get('DEFAULT_HANDLERS', [])
+        for handler_class in default_handlers:
+            try:
+                if isinstance(handler_class, str):
+                    # import handler class from string
+                    module_path, class_name = handler_class.rsplit('.', 1)
+                    module = __import__(module_path, fromlist=[class_name])  # import the module
+                    handler_class = getattr(module, class_name)
+                handler = handler_class()
+                self.handlers.append(handler)
+            except Exception as e:
+                print(f"Error initializing default handler {handler_class}: {e}")
+    
+    def add_handler(self, handler: LogHandler):
+        """Add a custom handler to the logger."""
+        if not isinstance(handler, LogHandler):
+            raise ValueError("Handler must be an instance of LogHandler")
+        self.handlers.append(handler)
+
+    def remove_handler(self, handler: LogHandler):
+        """Remove a custom handler from the logger."""
+        if handler in self.handlers:
+            self.handlers.remove(handler)
+
+    def clear_handlers(self):
+        """Remove all custom handlers from the logger."""
         
     def start(self):
         """Start the logging thread."""
@@ -84,6 +131,9 @@ class AsyncLogger:
             with transaction.atomic():
                 LogEntry.objects.bulk_create(batch, ignore_conflicts=True)
 
+                # send log entries to custom handlers
+                self._send_to_handlers(batch)
+
                 # Log dropped messages if any
                 with self._dropped_lock:
                     if self.dropped_count > 0:
@@ -115,6 +165,28 @@ class AsyncLogger:
 
         except Exception as e:
             print(f"Error flushing log batch: {e}")
+
+    def _send_to_handlers(self, batch: List[LogEntry]):
+        """Send log entries to all registered handlers.
+        Args:
+            batch: List[LogEntry] - The batch of log entries to send to handlers
+        """
+        for handler in self.handlers:
+            try:
+                for entry in batch:
+                    handler.handle(entry)
+                
+            except Exception as e:
+                # Dont let an error in a handler crash the logger
+                print(f"Error sending log entries to handler {handler.__class__.__name__}: {e}")
+
+    def _flush_handlers(self):
+        """Flush all registered handlers."""
+        for handler in self.handlers:
+            try:
+                handler.flush()
+            except Exception as e:
+                print(f"Error flushing handler {handler.__class__.__name__}: {e}")
     
     def log(self, level: str, message: str, **kwargs):
         """Add a log entry to the queue."""

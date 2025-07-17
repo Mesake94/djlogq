@@ -7,9 +7,9 @@ import json
 import time
 import threading
 from .models import LogEntry, LogLevel
-from .async_logger import AsyncLogger, get_async_logger, stop_async_logger
+from .async_logger import AsyncLogger, get_async_logger, stop_async_logger, LogHandler
 from .utils import log_performance, log_function_call
-import requests
+
 
 class AsyncLoggerTestCase(TransactionTestCase):
     def setUp(self):
@@ -240,4 +240,70 @@ class UtilsTestCase(TransactionTestCase):
         entries = LogEntry.objects.all()
 
         self.assertGreater(entries.count(), 0)
+        
+
+class LogHandlerTestCase(TransactionTestCase):
+    def setUp(self):
+        super().setUp()
+        # Stop the global logger to avoid interference
+        stop_async_logger()
+        
+        # Clear all existing logs
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM logq_logentry")
+        
+        # Create a properly configured global logger
+        from .async_logger import _async_logger
+        from . import async_logger as async_logger_module
+        
+        # Create a test logger with fast flush interval
+        test_logger = AsyncLogger(max_queue_size=100, flush_interval=0.1)
+        test_logger.start()
+        
+        # Replace the global logger
+        async_logger_module._async_logger = test_logger
+        
+        time.sleep(0.2)  # Wait for thre
+    
+    def tearDown(self):
+        # Stop the global logger
+        stop_async_logger()
+        time.sleep(0.2)  # Wait for thread to stop
+        
+        # Clear logs after test
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM logq_logentry")
+        super().tearDown()
+    
+    def test_log_handler(self):
+        """Test log handler functionality."""
+        # Verify we start with no logs
+        self.assertEqual(LogEntry.objects.count(), 0)
+        
+        # Create a test handler
+        class TestHandler(LogHandler):
+            def handle(self, log_entry:LogEntry) -> None:
+                pass
+
+            def flush(self) -> None:
+                pass
+        
+        # Create a logger with the test handler
+        logger = get_async_logger()
+        logger.add_handler(TestHandler())
+        logger.start()
+        
+        logger.info("Test message")
+        time.sleep(0.5)
+
+        # Verify we have exactly one log entry
+        self.assertEqual(LogEntry.objects.count(), 1)
+        
+        # Verify the log entry was sent to the handler
+        log_entry = LogEntry.objects.first()
+        self.assertEqual(log_entry.message, "Test message")
+        
+        # Stop the logger
+        logger.stop()
+        time.sleep(0.2)  # Wait for thread to stop
         
