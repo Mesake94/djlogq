@@ -133,7 +133,8 @@ class AsyncLogger:
 
                 # send log entries to custom handlers
                 self._send_to_handlers(batch)
-
+                # flush custom handlers
+                self._flush_handlers()
                 # Log dropped messages if any
                 with self._dropped_lock:
                     if self.dropped_count > 0:
@@ -279,3 +280,4 @@ def stop_async_logger():
         _async_logger.stop()
         _async_logger = None
 
+    
