@@ -14,11 +14,12 @@ class LogHandler:
 
 
 class ConsoleHandler(LogHandler):
-
+  """Log handler that prints to the console"""
+  
   def __init__(self):
     self.buffer = []
   
-  def handle(self, log_entry):
+  def handle(self, log_entry:LogEntry):
     self.buffer.append({
       "message": log_entry.message,
       "level": log_entry.level,
