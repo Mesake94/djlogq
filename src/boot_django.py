@@ -56,8 +56,8 @@ def boot_django():
         SECRET_KEY="django-insecure-test-key-for-testing-only",
         ASYNC_LOGGING_CONFIG={
             "MAX_QUEUE_SIZE": 1000,
-            "FLUSH_INTERVAL": 0.1,
-            "AUTO_CLEANUP_INTERVAL": 1,  # 1 second for testing
+            "FLUSH_INTERVAL": 1,
+            "AUTO_CLEANUP_INTERVAL": 60,  # 100 seconds for testing
             "CLEANUP_POLICIES": [
                 {"days": 30, "level": "INFO", "enabled": True},  # keep logs for 30 days
                 {"days": 7, "level": "WARNING", "enabled": True},  # keep logs for 7 days

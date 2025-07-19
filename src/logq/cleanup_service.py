@@ -123,6 +123,7 @@ class PeriodicCleanupService:
       self.logger.error(f"Cleanup policy {policy} has failed: {e}")
   
 _cleanup_service = None
+_cleanup_service_lock = threading.Lock()
 
 
 def get_cleanup_service() -> PeriodicCleanupService:
@@ -152,14 +153,14 @@ def get_cleanup_service() -> PeriodicCleanupService:
       service.start()
   """
   global _cleanup_service
-  if _cleanup_service is None:
-    # read the policies from the config
-    policies = getattr(settings, 'ASYNC_LOGGING_CONFIG', {}).get('CLEANUP_POLICIES', [])
-    policies = [CleanupPolicy(**policy) for policy in policies]
-    _cleanup_service = PeriodicCleanupService(
-      policies=policies,
-      check_interval=10
-    )
+  with _cleanup_service_lock:
+    if _cleanup_service is None:
+      # read the policies from the config
+      policies = getattr(settings, 'ASYNC_LOGGING_CONFIG', {}).get('CLEANUP_POLICIES', [])
+      policies = [CleanupPolicy(**policy) for policy in policies]
+      _cleanup_service = PeriodicCleanupService(
+        policies=policies,
+      )
   return _cleanup_service
 
 
@@ -206,6 +207,6 @@ def stop_cleanup_service():
       - The service will stop running after the current cleanup cycle completes.
   """
   global _cleanup_service
-  if _cleanup_service:
-    _cleanup_service.stop()
-    _cleanup_service = None
+  with _cleanup_service_lock:
+    if _cleanup_service:
+      _cleanup_service.stop()
