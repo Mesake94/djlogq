@@ -46,3 +46,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Each cleanup policy can specify log level, age (in days), and enabled/disabled status.
 - Management command `clean_logs` for manual or programmatic log cleanup, supporting `--days`, `--level`, and `--dry-run` options.
 - Singleton pattern for cleanup service with `start_cleanup_service()` and `stop_cleanup_service()` helpers.
+### Removed
+- `AUTO_CLEANUP_DAYS` - the settings is now not needed and is replaced by `CLEANUP_POLICIES`

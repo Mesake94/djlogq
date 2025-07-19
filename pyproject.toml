@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "djlogq"
 version = "1.0.9"
-description = "A reusable Django app for asynchronous, thread-safe logging with rich metadata, admin interface, and API support."
+description = "A robust and reusable Django app for asynchronous, thread-safe logging. Features include rich metadata capture, background log cleanup, configurable retention policies, admin interface, and REST API support for seamless log management."
 readme = "README.md"
 authors = [
     {name = "mess", email = "mesnavunawa@gmail.com"}
@@ -16,7 +16,10 @@ dependencies = [
     "Django",
     "requests",
 ]
-urls = {Homepage = "https://github.com/Mesake94/djlogq"}
+urls = {
+    Homepage = "https://github.com/Mesake94/djlogq",
+    Download = "https://static.pepy.tech/badge/djlogq",
+}
 [project.optional-dependencies]
 dev = [
     "build==1.2.1",

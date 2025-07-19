@@ -16,12 +16,7 @@ A reusable Django app that provides asynchronous logging functionality using a s
 - **Extendible**: Easily add your own custom handlers to process logs in different ways.
 
   **Useful built-in and example handlers include:**
-  - **File Handler**: Write logs to a file.
-  - **Email Handler**: Send error logs via email.
-  - **Webhook Handler**: Forward logs to external services (e.g., Slack, Discord, custom endpoints).
-  - **Database Handler**: Store logs in custom database tables.
-  - **Console Handler**: Output logs to the console for development.
-  - **Third-Party Integrations**: Integrate with services like Sentry or Logstash.
+  - **Console Handler**: Output logs to the console
   - You can implement your own handler by subclassing the provided base handler class.
 
 ## Installation
@@ -53,10 +48,20 @@ python manage.py migrate
 ASYNC_LOGGING_CONFIG = {
     'MAX_QUEUE_SIZE': 1000,
     'FLUSH_INTERVAL': 1.0,  # seconds
-    'AUTO_CLEANUP_DAYS': 30,
+    'AUTO_CLEANUP_INTERVAL': 3600,  # seconds
     'ENABLE_REQUEST_LOGGING': True,
     'IGNORE_PATHS': ['/admin/'],  # paths to ignore for request logging
-    'DEFAULT_HANDLERS': [],  # list of handler class paths, e.g. ['logq.handlers.FileHandler']
+    'DEFAULT_HANDLERS': [],  # list of handler class paths, e.g. ['logq.handlers.FileHandler'],
+    # CLEANUP_POLICIES defines how long to keep logs of each level before automatic deletion.
+    # Each policy is a dictionary with:
+    #   - "days": Number of days to retain logs at this level
+    #   - "level": Log level to which this policy applies (e.g., "INFO", "WARNING", "ERROR")
+    #   - "enabled": Whether this cleanup policy is active
+    'CLEANUP_POLICIES': [
+        {"days": 10, "level": "INFO", "enabled": True},     # Keep INFO logs for 10 days
+        {"days": 10, "level": "WARNING", "enabled": True},  # Keep WARNING logs for 10 days
+        {"days": 15, "level": "ERROR", "enabled": True},    # Keep ERROR logs for 15 days
+    ]
 }
 ```
 

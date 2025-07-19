@@ -59,10 +59,9 @@ def boot_django():
             "FLUSH_INTERVAL": 0.1,
             "AUTO_CLEANUP_INTERVAL": 1,  # 1 second for testing
             "CLEANUP_POLICIES": [
-                {"days": 30, "level": "INFO", "enabled": True},
-                {"days": 7, "level": "WARNING", "enabled": True},
-                {"days": 1, "level": "ERROR", "enabled": True},
-                {"days": 0, "level": "CRITICAL", "enabled": True},
+                {"days": 30, "level": "INFO", "enabled": True},  # keep logs for 30 days
+                {"days": 7, "level": "WARNING", "enabled": True},  # keep logs for 7 days
+                {"days": 1, "level": "ERROR", "enabled": True},  # keep logs for 1 day
             ],
             "DEFAULT_HANDLERS": []
         }
