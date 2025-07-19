@@ -25,3 +25,6 @@ dist/
 
 # ignore .sqlite3
 *.sqlite3
+
+# ignore log files
+*.log

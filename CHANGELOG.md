@@ -37,3 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed bug for custom log handlers flush method not being called
+
+
+## [1.0.9] - 2025-07-19
+### Added
+- Automatic periodic log cleanup service (`PeriodicCleanupService`) that runs in a background thread.
+- Support for multiple cleanup policies, configurable via `ASYNC_LOGGING_CONFIG['CLEANUP_POLICIES']` in Django settings.
+- Each cleanup policy can specify log level, age (in days), and enabled/disabled status.
+- Management command `clean_logs` for manual or programmatic log cleanup, supporting `--days`, `--level`, and `--dry-run` options.
+- Singleton pattern for cleanup service with `start_cleanup_service()` and `stop_cleanup_service()` helpers.

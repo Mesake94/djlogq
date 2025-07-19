@@ -3,12 +3,14 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db import connection
+from datetime import timedelta
 import json
 import time
 import threading
 from .models import LogEntry, LogLevel
 from .async_logger import AsyncLogger, get_async_logger, stop_async_logger, LogHandler
 from .utils import log_performance, log_function_call
+from .cleanup_service import get_cleanup_service, start_cleanup_service, stop_cleanup_service
 
 
 class AsyncLoggerTestCase(TransactionTestCase):
@@ -105,7 +107,6 @@ class AsyncLoggerTestCase(TransactionTestCase):
         self.assertIsNotNone(dropped_entry)
         self.assertEqual(dropped_entry.level, LogLevel.WARNING)
         
-
 
 class LogEntryModelTestCase(TransactionTestCase):
     def setUp(self):
@@ -282,11 +283,25 @@ class LogHandlerTestCase(TransactionTestCase):
         
         # Create a test handler
         class TestHandler(LogHandler):
+
+            def __init__(self):
+                self.buffer = []
+
             def handle(self, log_entry:LogEntry) -> None:
-                pass
+                self.buffer.append({
+                    "message": log_entry.message,
+                    "level": log_entry.level,
+                    "timestamp": log_entry.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                    "module": log_entry.module,
+                    "function": log_entry.function,
+                    "line_number": log_entry.line_number,
+                    "user_id": log_entry.user_id,
+                })
 
             def flush(self) -> None:
-                pass
+                with open("test_log.log", "a") as f:
+                    f.write(json.dumps(self.buffer) + "\n")
+                self.buffer.clear()  # Clear the buffer after writing to file
         
         # Create a logger with the test handler
         logger = get_async_logger()
@@ -306,4 +321,53 @@ class LogHandlerTestCase(TransactionTestCase):
         # Stop the logger
         logger.stop()
         time.sleep(0.2)  # Wait for thread to stop
+
+
+class CleanupServiceTestCase(TransactionTestCase):
+    def setUp(self):
+        super().setUp()
+        # Stop the global logger to avoid interference
+        stop_async_logger()
         
+        # Clear all existing logs
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM logq_logentry")
+        
+        # Create a properly configured global logger
+        from .async_logger import _async_logger
+        from . import async_logger as async_logger_module
+        from .cleanup_service import get_cleanup_service, start_cleanup_service, stop_cleanup_service
+        
+        # Create a test logger with fast flush interval
+        test_logger = AsyncLogger(max_queue_size=100, flush_interval=0.1)
+        test_logger.start()
+        
+        # Replace the global logger
+        async_logger_module._async_logger = test_logger
+        # create cleanup service
+        cleanup_service = get_cleanup_service()
+        cleanup_service.start()
+        time.sleep(0.2)  # Wait for thre
+    
+    def tearDown(self):
+        # Stop the global logger
+        stop_async_logger()
+        time.sleep(0.2)  # Wait for thread to stop
+        
+        # Clear logs after test
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM logq_logentry")
+        
+        # stop cleanup service
+        stop_cleanup_service()
+        super().tearDown()
+
+    def test_cleanup_service(self):
+        # create a log entry
+        logger = get_async_logger()
+        logger.info("Test message")
+        time.sleep(0.5)
+
+        # check that the log entry is created
+        self.assertEqual(LogEntry.objects.count(), 1)
+

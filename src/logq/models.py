@@ -42,3 +42,4 @@ class LogEntry(models.Model):
         """Return a string representation of the log entry."""
         return f"[{self.level}] {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')} - {self.message[:100]}"
   
+

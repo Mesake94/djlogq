@@ -10,18 +10,7 @@ from django.db import transaction
 from django.conf import settings
 from .models import LogEntry, LogLevel
 from typing import List
-
-
-class LogHandler:
-    """Base class for custom log handlers"""
-
-    def handle(self, log_entry:LogEntry) -> None:
-        """Handle a log entry. Overide this method to implement custom logging behavior."""
-        pass
-
-    def flush(self) -> None:
-        """Flush any buffered log entries. Override this method to implement custom flushing behavior."""
-        pass
+from .handlers import LogHandler, ConsoleHandler
 
 
 class AsyncLogger:
@@ -44,7 +33,7 @@ class AsyncLogger:
         self._dropped_lock = threading.Lock()
 
         # initialize custom handlers
-        self.handlers = handlers or []
+        self.handlers = handlers or [ConsoleHandler()]
         self._add_default_handlers()  # add default handlers to the logger
 
     def _add_default_handlers(self):
@@ -76,7 +65,8 @@ class AsyncLogger:
 
     def clear_handlers(self):
         """Remove all custom handlers from the logger."""
-        
+        self.handlers = []
+
     def start(self):
         """Start the logging thread."""
         with self._lock:
@@ -115,7 +105,6 @@ class AsyncLogger:
                         self._flush_batch(batch)
                         batch = []
                         last_flush = current_time
-                        
             except Exception as e:
                 # Log the error to prevent infinite loops
                 print(f"Error in async logger worker: {e}")

@@ -54,6 +54,18 @@ def boot_django():
         TIME_ZONE="UTC",
         USE_TZ=True,
         SECRET_KEY="django-insecure-test-key-for-testing-only",
+        ASYNC_LOGGING_CONFIG={
+            "MAX_QUEUE_SIZE": 1000,
+            "FLUSH_INTERVAL": 0.1,
+            "AUTO_CLEANUP_INTERVAL": 1,  # 1 second for testing
+            "CLEANUP_POLICIES": [
+                {"days": 30, "level": "INFO", "enabled": True},
+                {"days": 7, "level": "WARNING", "enabled": True},
+                {"days": 1, "level": "ERROR", "enabled": True},
+                {"days": 0, "level": "CRITICAL", "enabled": True},
+            ],
+            "DEFAULT_HANDLERS": []
+        }
 
     )
     django.setup()
