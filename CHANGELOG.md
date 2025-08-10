@@ -48,3 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Singleton pattern for cleanup service with `start_cleanup_service()` and `stop_cleanup_service()` helpers.
 ### Removed
 - `AUTO_CLEANUP_DAYS` - the settings is now not needed and is replaced by `CLEANUP_POLICIES`
+
+## [1.0.9] - 2025-08-11
+### Fixed
+- Fixed bug in exception logger handling
