@@ -243,7 +243,7 @@ class AsyncLogger:
         if exc_info is None:
             exc_info = traceback.format_exc()
         
-        extra_data = kwargs.get('extra_data', {})
+        extra_data = kwargs.pop('extra_data', {})
         extra_data['traceback'] = exc_info
         
         self.log(LogLevel.ERROR, message, extra_data=extra_data, **kwargs)

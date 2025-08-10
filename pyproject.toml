@@ -16,10 +16,10 @@ dependencies = [
     "Django",
     "requests",
 ]
-urls = {
-    Homepage = "https://github.com/Mesake94/djlogq",
-    Download = "https://static.pepy.tech/badge/djlogq",
-}
+
+# [![PyPI Downloads](https://static.pepy.tech/badge/djlogq)](https://pepy.tech/projects/djlogq)
+urls = {Homepage = "https://github.com/Mesake94/djlogq", Downloads = "https://pepy.tech/projects/djlogq"}
+
 [project.optional-dependencies]
 dev = [
     "build==1.2.1",

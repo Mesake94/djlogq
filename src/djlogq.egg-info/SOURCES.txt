@@ -10,6 +10,8 @@ src/logq/__init__.py
 src/logq/admin.py
 src/logq/apps.py
 src/logq/async_logger.py
+src/logq/cleanup_service.py
+src/logq/handlers.py
 src/logq/middleware.py
 src/logq/models.py
 src/logq/tests.py
